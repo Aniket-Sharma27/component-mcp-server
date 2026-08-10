@@ -57,25 +57,13 @@ props:
           resolvesTo: "#007de0"
           tokenChain: "primary bold background color -> --ion-lit-color-leonardo-base-primary (#007de0)"
           appliesToCssProperty: "background-color"
-        dark:
-          resolvesTo: "#007de0"
-          tokenChain: "primary bold background color -> --ion-lit-color-leonardo-base-primary (#007de0)"
-          appliesToCssProperty: "background-color"
       moderate:
         light:
           resolvesTo: "#e2eaff"
           tokenChain: "primary moderate background color -> --ion-lit-color-palette-light-blue-200 (#e2eaff)"
           appliesToCssProperty: "background-color"
-        dark:
-          resolvesTo: "#e2eaff"
-          tokenChain: "primary moderate background color -> --ion-lit-color-palette-light-blue-200 (#e2eaff)"
-          appliesToCssProperty: "background-color"
       subtle:
         light:
-          resolvesTo: "#ffffff"
-          tokenChain: "primary subtle background color -> white (#ffffff)"
-          appliesToCssProperty: "background-color"
-        dark:
           resolvesTo: "#ffffff"
           tokenChain: "primary subtle background color -> white (#ffffff)"
           appliesToCssProperty: "background-color"
@@ -91,16 +79,8 @@ props:
           resolvesTo: "#007de0"
           tokenChain: "primary intent background color -> --ion-lit-color-leonardo-base-primary (#007de0)"
           appliesToCssProperty: "background-color"
-        dark:
-          resolvesTo: "#007de0"
-          tokenChain: "primary intent background color -> --ion-lit-color-leonardo-base-primary (#007de0)"
-          appliesToCssProperty: "background-color"
       secondary:
         light:
-          resolvesTo: "#030f26"
-          tokenChain: "secondary intent background color -> --ion-lit-color-leonardo-base-secondary (#030f26)"
-          appliesToCssProperty: "background-color"
-        dark:
           resolvesTo: "#030f26"
           tokenChain: "secondary intent background color -> --ion-lit-color-leonardo-base-secondary (#030f26)"
           appliesToCssProperty: "background-color"
@@ -109,16 +89,8 @@ props:
           resolvesTo: "#c70000"
           tokenChain: "negative intent background color -> --ion-lit-color-leonardo-base-negative (#c70000)"
           appliesToCssProperty: "background-color"
-        dark:
-          resolvesTo: "#c70000"
-          tokenChain: "negative intent background color -> --ion-lit-color-leonardo-base-negative (#c70000)"
-          appliesToCssProperty: "background-color"
       positive:
         light:
-          resolvesTo: "#2dc168"
-          tokenChain: "positive intent background color -> --ion-lit-color-leonardo-base-positive (#2dc168)"
-          appliesToCssProperty: "background-color"
-        dark:
           resolvesTo: "#2dc168"
           tokenChain: "positive intent background color -> --ion-lit-color-leonardo-base-positive (#2dc168)"
           appliesToCssProperty: "background-color"
@@ -127,16 +99,8 @@ props:
           resolvesTo: "#007de0"
           tokenChain: "buy intent background color -> --ion-lit-color-leonardo-base-buy (#007de0)"
           appliesToCssProperty: "background-color"
-        dark:
-          resolvesTo: "#007de0"
-          tokenChain: "buy intent background color -> --ion-lit-color-leonardo-base-buy (#007de0)"
-          appliesToCssProperty: "background-color"
       sell:
         light:
-          resolvesTo: "#c70000"
-          tokenChain: "sell intent background color -> --ion-lit-color-leonardo-base-sell (#c70000)"
-          appliesToCssProperty: "background-color"
-        dark:
           resolvesTo: "#c70000"
           tokenChain: "sell intent background color -> --ion-lit-color-leonardo-base-sell (#c70000)"
           appliesToCssProperty: "background-color"
@@ -150,6 +114,13 @@ props:
   - name: disabled
     type: boolean
     category: visual
+    required: false
+    default: false
+    values: []
+    designTokens: {}
+  - name: hidden
+    type: boolean
+    category: accessibility
     required: false
     default: false
     values: []
@@ -211,17 +182,16 @@ propInteractions:
   - icon can be string or IIconOptions object; when string, uses legacy format "family name" that gets parsed into separate name and family properties
   - emphasis influences both background color and label/icon color through different token chains
 needsReview:
-  - No design token data found for intent values: inverse, on-light, on-dark (only primary, secondary, negative, positive, buy, sell traced from ds_tokens.css)
-  - Dark theme tokens not fully traced for all intent/emphasis combinations - only primary intent tokens found; other intents may have dark theme variants not documented in provided ds_tokens.css
+  - "No design token data found for intent values: inverse, on-light, on-dark (only primary, secondary, negative, positive, buy, sell traced from ds_tokens.css)"
+  - Dark theme tokens not found for any intent/emphasis background color combinations - leonardo base colors defined in ds_tokens.css do not have separate dark theme variants; dark theme palette colors exist but component-level button background tokens for dark theme could not be traced
+  - Size prop design tokens not traced for xs, sm, md, lg values (min-height, padding, border-radius) - component tokens like --ion-comp-button-container-sizing-min-height-xs referenced in button-ds.css but not resolved to actual pixel values in provided ds_variables.json
   - Color values for emphasis=moderate and emphasis=subtle combinations with different intents not traced from actual token definitions - only primary intent values documented
   - Label/icon color tokens not fully traced for all state combinations (hover, pressed, disabled) across all intents
   - Focus ring color tokens not traced from provided token files
-  - Dark theme background colors may differ from light theme but not all combinations verified in provided ds_tokens.css
   - CSS custom properties for loading spinner colors (--ion-comp-button-progress-indicator-indicator-color-bg-*, --ion-comp-button-progress-indicator-track-color-bg-*) not traced to final resolved values
-  - Dark theme variations for leonardo base colors present in ds_tokens.css but component-specific token chains not fully accessible without complete token resolution
+  - Component-level button background tokens (e.g., --ion-comp-button-container-color-bg-primary-enabled-bold) not resolved to leonardo base colors in provided ds_variables.json
   - Intent-specific color behavior for on-light and on-dark intents appears to use different token system (base toggle) but token values not traced
   - MQ design string parsing results not verifiable without runtime screen size context - defaults to md when MQ strings used
-  - Color tokens for emphasis=moderate and emphasis=subtle with non-primary intents (secondary, negative, positive, buy, sell) not traced from provided files
 ---
 
 ## label
@@ -245,6 +215,13 @@ Provides accessibility label for screen readers and assistive technologies. This
 - Uses label value as fallback if ariaLabel not explicitly set
 - Falls back to icon name if neither label nor ariaLabel provided
 - Returns "No label" as last resort
+
+**Fallback behavior:**
+- First priority: Returns explicitly set _ariaLabel property value
+- Second priority: Returns label property value if _ariaLabel is empty
+- Third priority: Returns icon string value if icon is string type and label is empty
+- Fourth priority: Returns icon.name property if icon is IIconOptions object and label is empty
+- Final fallback: Returns 'No label' string
 
 **Visual property:** none (accessibility-only)
 
@@ -274,6 +251,17 @@ Controls icon display as prefix or suffix to button text. Accepts either string 
 - String: Legacy compatibility when icon family and name are space-separated
 - Object: New API when separate control over icon name and family needed
 - Empty: Text-only button
+
+**Icon interface:**
+- name: string (required)
+- family: string (optional)
+
+**Icon parsing behavior:**
+- String format: Parsed by parseIconName() and parseFamilyName() utilities
+- String with space "family name" splits: first word becomes family, second becomes name
+- String with single word: treated as name only, family defaults to empty
+- Object format: name property used directly for icon, family property used for icon family selection
+- Exposed via computed properties iconName and iconFamily for template consumption
 
 ## iconPlacement
 
@@ -327,9 +315,14 @@ Controls visual weight and prominence of the button through color and fill varia
 - subtle: Tertiary actions, inverse buttons, or when button needs to be less visually dominant
 
 **Color behavior:**
-- Single prop influences both background-color andforeground color for label and icon
+- Single prop influences both background-color and foreground color for label and icon
 - Combined with intent to determine final color values
 - Color values depend on combination with intent property (see jointTokens)
+
+**Interaction with intent:**
+- Final button colors determined by combination of emphasis and intent values
+- For exact resolved color values, see jointTokens section which documents intent-emphasis combinations
+- CSS tokens follow pattern: --ion-comp-button-container-color-bg-{intent}-enabled-{emphasis}
 
 ## intent
 
@@ -358,6 +351,9 @@ Controls semantic meaning and color scheme of the button for different action ty
 - Each intent has specific base colors defined in ds_tokens.css
 - Combined with emphasis to determine final applied color
 - Affects both button container and foreground (label/icon) colors
+
+**Note:**
+- For exact resolved color combinations of intent and emphasis, see jointTokens section below
 
 ## loading
 
@@ -391,6 +387,24 @@ Controls disabled state of the button, preventing interaction.
 - Set true when button action is not currently available
 - Override default false when form validation fails or permission-based restrictions apply
 
+**Interaction with loading:**
+- When true, loading spinner is suppressed regardless of loading prop value
+- showSpinner computed property returns false when disabled=true even if loading=true
+- Disabled state takes precedence over loading state for interaction prevention
+
+## hidden
+
+Controls whether the button is visible in the DOM. When true, the button is completely hidden from view and interaction.
+
+**Visual cues:**
+- When true: Button is completely hidden from the interface
+- When false: Button is visible and interactive (default behavior)
+
+**When to use:**
+- Set true to conditionally hide buttons based on application state
+- Useful for theme-specific buttons (e.g., inverse buttons only visible with dark theme)
+- Override default false when conditional visibility is required based on design system theme or other state
+
 ## loadingIcon
 
 Controls the icon name used for the loading spinner.
@@ -423,6 +437,16 @@ Controls button width for backward compatibility with legacy API.
 - Overrides default auto width when set
 - Applies styles directly to nativeElement
 - Quick fix prevents redundant style application if width value unchanged
+
+**Width value handling:**
+- Values prefixed with '--' are wrapped with var() for CSS variable usage (e.g., '--spacing-md' becomes 'var(--spacing-md)'
+- Special value 'full' is converted to '100%' for full-width buttons
+- Empty or falsy values are ignored without applying changes
+- Component sets display: 'block' on button element when width is configured
+
+**Legacy behavior:**
+- This is a legacy API maintained for backward compatibility
+- Recommended to use standard CSS width styling in new implementations instead
 
 ## focus
 
@@ -473,11 +497,11 @@ Demonstrates trading-specific buy action button with blue color.
 Demonstrates trading-specific sell action button with red color.
 
 ```html
-<ion-button label="Inverse Button" intent="inverse" emphasis="bold" hidden="!useDesignSystemTheme">Inverse Title</ion-button>
+<ion-button label="Inverse Button" intent="inverse" emphasis="bold" [hidden]="!useDesignSystemTheme">Inverse Title</ion-button>
 ```
-Demonstrates inverse button for use on dark backgrounds, conditionally hidden.
+Demonstrates inverse button for use on dark backgrounds, conditionally hidden based on design system theme flag.
 
 ```html
-<ion-button wrapLabel="wrapLabel" width="width" iconPlacement="iconPlacement" icon="customIcon || selectedIcon" intent="primary" disabled="disabled" size="size" emphasis="emphasis"></ion-button>
+<ion-button [wrapLabel]="wrapLabel" [width]="width" [iconPlacement]="iconPlacement" [icon]="customIcon || selectedIcon" intent="primary" [disabled]="disabled" [size]="size" [emphasis]="emphasis"></ion-button>
 ```
 Demonstrates icon-only button configuration with potential wrap behavior, custom width, icon placement logic, and disabled state.
