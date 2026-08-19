@@ -51,6 +51,26 @@ Because of this, for EVERY event you document:
   event, but expect it to hold across the whole library given the
   web-component wrapping.
 
+## CRITICAL: boolean props require an explicit value, never bare presence
+
+Because this library is exposed as web components, boolean props do NOT
+follow the native HTML boolean-attribute convention (where presence alone
+means true, e.g. `<input disabled>`). A downstream LLM generating code
+will default to that convention unless told otherwise — this has actually
+happened in testing. Every component file MUST include a short
+"## Usage Notes" section in the body, placed right after the opening
+description and before the first prop section, stating explicitly:
+
+Boolean props on this component must always be passed with an explicit
+string value — e.g. `disabled="true"` or `[disabled]="isDisabled"` — never
+as bare attribute presence (e.g. `disabled` alone, with no value). Bare
+attribute presence is a native HTML convention this component does NOT
+support; it will not be interpreted as true.
+
+Include this section even if you're unsure whether it's strictly necessary
+for this specific component — it costs little and prevents a real,
+observed failure mode.
+
 ## CRITICAL: YAML formatting rules
 
 - Never backslash-escape a single quote (') inside a double-quoted string —
@@ -323,4 +343,4 @@ should be a deliberate, explainable choice, not an oversight.
 
 ## REFERENCE EXAMPLE (for a different components). Match this format exactly.
 
-you can find the text-input.md and password-input.md in the respective component folders to see a reference example of how the current component's .md file should look like
+you can find the component.md in the context component folders to see a reference example of how the current component's .md file should look like

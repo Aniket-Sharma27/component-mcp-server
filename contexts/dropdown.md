@@ -402,6 +402,10 @@ events:
     bindingSyntax: "(validationStateChange)=\"onValidationStateChange($event)\""
 ---
 
+## Usage Notes
+
+Boolean props on this component must always be passed with an explicit string value — e.g. `disabled="true"` or `[disabled]="isDisabled"` — never as bare attribute presence (e.g. `disabled` alone, with no value). Bare attribute presence is a native HTML convention this component does NOT support; it will not be interpreted as true.
+
 ## size
 
 Controls the height, padding, typography size, and arrow icon dimensions of the dropdown field. Size values (sm, md, lg) map to design system spacing and typography tokens that scale the entire field vertically. This is a visual prop that directly impacts the user's perception of the component's scale and prominence in the interface.

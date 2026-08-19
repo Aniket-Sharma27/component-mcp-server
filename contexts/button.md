@@ -194,6 +194,10 @@ needsReview:
   - MQ design string parsing results not verifiable without runtime screen size context - defaults to md when MQ strings used
 ---
 
+## Usage Notes
+
+Boolean props on this component must always be passed with an explicit string value — e.g. `disabled="true"` or `[disabled]="isDisabled"` — never as bare attribute presence (e.g. `disabled` alone, with no value). Bare attribute presence is a native HTML convention this component does NOT support; it will not be interpreted as true.
+
 ## label
 
 Controls the button text content. When empty, button may render as icon-only or with no visible content (for purely decorative or icon-based buttons). This prop drives the showLabel template property which determines whether the label element is rendered in the template.

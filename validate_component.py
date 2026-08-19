@@ -56,11 +56,10 @@ def load(path):
 
 
 def check_indentation_hint(path):
-    """Heuristic: look for '- name:' lines in the raw text at inconsistent
-    leading-space counts. This won't catch everything YAML-legal but flags
-    the exact pattern that has broken parsing three times so far.
-    Only scans the frontmatter block (between the first and second '---'),
-    not the Markdown body, which may contain similar-looking bullet text."""
+    """Heuristic: look for '- name:' lines specifically within the props:
+    block at inconsistent leading-space counts. Scoped to props only, not
+    any '- name:' in the frontmatter, since nested lists (e.g.
+    serviceApi.methods) legitimately sit at a different indent depth."""
     with open(path) as f:
         raw = f.read()
 
@@ -69,14 +68,26 @@ def check_indentation_hint(path):
         return None  # no closing delimiter; load() will already report this as a hard failure
     frontmatter_block = parts[1]
 
+    lines = frontmatter_block.splitlines()
     indents = []
-    for line in frontmatter_block.splitlines():
+    in_props_block = False
+    props_block_indent = None
+    for line in lines:
+        stripped = line.strip()
+        if not in_props_block:
+            if stripped == "props:":
+                in_props_block = True
+            continue
+        # We're inside the props: block. A line that is a new top-level
+        # frontmatter key (no leading whitespace, ends with ':') ends it.
+        if line and not line[0].isspace() and stripped.endswith(":"):
+            break
         m = re.match(r"^( *)- name:", line)
         if m:
             indents.append(len(m.group(1)))
 
     if indents and len(set(indents)) > 1:
-        return f"Inconsistent indentation found across '- name:' entries: seen indent levels {sorted(set(indents))} (should all match)"
+        return f"Inconsistent indentation found across '- name:' entries within props: (seen indent levels {sorted(set(indents))}, should all match)"
     return None
 
 
@@ -101,6 +112,63 @@ def main():
 
     props = meta.get("props", [])
     print(f"✅ Parses cleanly. {len(props)} props found.\n")
+
+    # --- relatedComponents structural check ---
+    related = meta.get("relatedComponents")
+    if related:
+        for r in related:
+            if not isinstance(r, dict):
+                issues.append(f"relatedComponents entry is not a structured object: {r}")
+                continue
+            for field in ["name", "relationship", "whenToUse"]:
+                if field not in r:
+                    issues.append(f"[relatedComponents: {r.get('name','?')}] missing required field: {field}")
+            if r.get("relationship") not in {"container", "child", "alternative"}:
+                warnings.append(
+                    f"[relatedComponents: {r.get('name','?')}] relationship "
+                    f"'{r.get('relationship')}' is not one of container/child/alternative"
+                )
+        if "## Related Components" not in body:
+            warnings.append(
+                "'relatedComponents' is populated in frontmatter but no "
+                "'## Related Components' section found in body"
+            )
+
+    # --- apiTypes consistency checks ---
+    api_types = meta.get("apiTypes")
+    if api_types is None:
+        warnings.append(
+            "No 'apiTypes' field found — assuming element-only for legacy "
+            "compatibility. If this component has a service API, add "
+            "apiTypes explicitly."
+        )
+        api_types = ["element"]
+    else:
+        if not isinstance(api_types, list) or not api_types:
+            issues.append(f"apiTypes should be a non-empty list, got: {api_types}")
+        if "element" not in api_types and props:
+            issues.append(
+                "'element' is not in apiTypes, but props are populated — "
+                "props/events/designTokens should be omitted entirely for "
+                "service-only components."
+            )
+        if "service" in api_types:
+            service_api = meta.get("serviceApi")
+            if not service_api:
+                issues.append(
+                    "'service' is in apiTypes but no 'serviceApi' field was found in frontmatter."
+                )
+            elif not service_api.get("methods"):
+                issues.append("serviceApi has no methods listed.")
+            if "## Service API" not in body:
+                issues.append("'service' is in apiTypes but no '## Service API' section found in body.")
+        if "element" in api_types and "service" in api_types:
+            if "## When to use which approach" not in body:
+                warnings.append(
+                    "Component has both element and service APIs but no "
+                    "'## When to use which approach' section found in body — "
+                    "this is the most important section for a dual-API component."
+                )
 
     # --- structural completeness ---
     names_seen = []

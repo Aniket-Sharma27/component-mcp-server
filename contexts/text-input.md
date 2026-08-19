@@ -337,6 +337,10 @@ needsReview:
 
 ---
 
+## Usage Notes
+
+Boolean props on this component must always be passed with an explicit string value — e.g. `disabled="true"` or `[disabled]="isDisabled"` — never as bare attribute presence (e.g. `disabled` alone, with no value). Bare attribute presence is a native HTML convention this component does NOT support; it will not be interpreted as true.
+
 ## size
 
 Controls text input sizing both through direct size values and responsive MQ design strings. Supports sm, md, lg values parsed by MqDesignStringParserService.
